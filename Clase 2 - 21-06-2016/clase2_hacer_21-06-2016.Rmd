@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 
 * Ejecutar el siguiente código
 ```{r, eval=FALSE}
-setwd("/Users/pacha/clases_profesor_mario_matus/clase2/")
 exports_data <- read.csv("copper_data.csv...")
 library(ggplot2)
 ggplot() + geom_line(aes(y = export, x = year, colour = product), data = exports_data, stat="identity")
