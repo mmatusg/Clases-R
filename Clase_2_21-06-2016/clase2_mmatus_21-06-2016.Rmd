@@ -1,0 +1,81 @@
+---
+title: "Clase 2"
+author: "Mario Matus G."
+date: "June 29, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+# Primera tarea
+
+* Ejecutar el siguiente c?digo
+```{r, eval=FALSE}
+exports_data <- read.csv("copper_data.csv")
+library(ggplot2)
+ggplot() + geom_line(aes(y = export, x = year, colour = product), data = exports_data, stat="identity")
+```
+* Luego editar el c?digo anterior para obtener
+    + Gr?fico de barras
+    + Gr?fico de puntos
+
+## Parte 1
+
+```{r tarea1_1}
+exports_data <- read.csv("copper_data.csv")
+library(ggplot2)
+ggplot() + geom_line(aes(y = export, x = year, colour = product), data = exports_data, stat="identity")
+```
+
+## Parte 2
+
+```{r tarea1_2}
+ggplot() + geom_bar(aes(y = export, x = year, colour = product, fill = product), data = exports_data, stat="identity")
+
+ggplot() + geom_point(aes(y = export, x = year, colour = product), data = exports_data, stat="identity")
+```
+
+# Segunda tarea
+
+* Crear un grafico de puntos que relacione Educaci?n (eje x) y Fertilidad (eje y)
+* En otro gr?fico repetir lo mismo pero agregando una l?nea de tendencia
+
+```{r tarea2}
+ggplot() + geom_point(aes(y = Fertility, x = Education), data = swiss, stat="identity")
+ggplot(swiss, aes(x=Education, y=Fertility)) + geom_point(shape=1) + geom_smooth(method=lm)
+```
+
+# Tercera tarea
+
+Obtener la correlaci?n entre todas las variables de la base de datos "swiss"
+
+```{r tarea3, fig.width=10, fig.height=10, warnings = FALSE}
+cor(swiss)
+library(GGally)
+ggpairs(swiss)
+
+### truco ###
+source("ggally_mod.R")
+
+ggpairs(swiss,
+        lower=list(continuous=wrap("smooth", colour="blue")),
+        diag=list(continuous=wrap("barDiag", fill="blue")),
+        upper=list(continuous=cor_fun))
+```
+
+# Cuarta tarea
+
+* Descargar el archivo [gini_por_regiones.xlsx](http://pacha.hk/clases_profesor_mario_matus/clase2/gini_por_regiones.xlsx) y abrirlo en R
+* Graficar la evoluci?n del Gini de la Regi?n Metropolitana
+* A nivel nacional 
+    + ¿Se puede decir que ha mejorado/empeorado la desigualdad entre 1990 y 2008?
+    + ¿Cu?l es el valor p del estad?stico asociado y la media del cambio?
+
+
+```{r tarea4}
+library(XLConnect)
+gini_grafico <- readWorksheetFromFile("gini_por_regiones_mmatus_21-06-2016.xlsx", sheet = "Sheet1", region = "M1:Z11", header = TRUE)
+ggplot() + geom_line(aes(y = Metropolitana, x = Anio), data = gini_grafico, stat="identity")
+```
