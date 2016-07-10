@@ -74,7 +74,7 @@ $$
 
 Francis Galton (1882 - 1911) sentó las bases de la Econometría estudiando la estatura de padres e hijos. Los datos de su estudio están disponibles en la instalación de R. El gráfico de estatura de padres versus estatura de hijos es el siguiente:
 
-```{r, fig.height=4, fig.width=5, echo=FALSE}
+```{r galton1, fig.height=4, fig.width=5, echo=FALSE}
 library(UsingR); data(galton);
 library(dplyr)
 freqData <- as.data.frame(table(galton$child, galton$parent))
@@ -103,7 +103,7 @@ g
 * Veremos la distribución marginal de los datos.
 * La corrección por género se obtiene multiplicando la estatura de las mujeres por 1,08.
 
-```{r galton,fig.height=3.5,fig.width=8}
+```{r galton2,fig.height=3.5,fig.width=8}
 library(reshape); long <- melt(galton)
 g <- ggplot(long, aes(x = value, fill = variable)) 
 g <- g + geom_histogram(colour = "black", binwidth=1) 
@@ -114,7 +114,7 @@ g
 ## Encontrando la media usando mínimos cuadrados
 
 * Veamos un poco los datos
-```{r}
+```{r galton3}
 head(galton, n=10) #primeras 10 observaciones (medidas en pulgadas)
 dim(galton) #tamaño muestral = 928 ; variables  = 2
 ```
@@ -139,7 +139,7 @@ manipulate(myHist(mu), mu = slider(62, 74, step = 0.5))
 ```
 
 ## El estimador de mínimos cuadrados es la media empírica
-```{r , fig.height=4, fig.width=4, fig.align='center'}
+```{r galton4, fig.height=4, fig.width=4, fig.align='center'}
 g <- ggplot(galton, aes(x = child)) + geom_histogram(fill = "royalblue", colour = "black", binwidth=1)
 g <- g + geom_vline(xintercept = mean(galton$child), size = 2, colour = "red")
 g
@@ -149,7 +149,7 @@ g
 
 El tamaño de los puntos en $(X,Y)$ representa la cantidad de observaciones que coinciden en dicho valor.
 
-```{r, fig.height=6,fig.width=7,echo=FALSE}
+```{r galton5, fig.height=6,fig.width=7,echo=FALSE}
 freqData <- as.data.frame(table(galton$child, galton$parent))
 names(freqData) <- c("child", "parent", "freq")
 freqData$child <- as.numeric(as.character(freqData$child))
@@ -196,11 +196,16 @@ manipulate(myPlot(beta), beta = slider(0, 1.2, step = 0.05))
 ```
 ## Regresión
 
-```{r}
+### Sin constante
+```{r galton6}
 lm(I(child - mean(child)) ~ I(parent - mean(parent)) - 1, data = galton)
 ```
 
-```{r, fig.height=6,fig.width=7}
+### Con constante
+```{r galton7}
+lm(I(child - mean(child)) ~ I(parent - mean(parent)), data = galton)
+```
+```{r galton8, fig.height=6,fig.width=7}
 freqData <- as.data.frame(table(galton$child, galton$parent))
 names(freqData) <- c("child", "parent", "freq")
 freqData$child <- as.numeric(as.character(freqData$child))
@@ -235,7 +240,7 @@ g
 
 Es interesante notar que las estimaciones del programa coinciden con el cálculo siguiendo las fórmulas por definición.
 
-```{r, fig.height=4, fig.width=5, echo=TRUE}
+```{r galton9, fig.height=4, fig.width=5, echo=TRUE}
 y <- galton$child
 x <- galton$parent
 beta1 <- cor(y, x) *  sd(y) / sd(x)
@@ -245,7 +250,7 @@ rbind(c(beta0, beta1), coef(lm(y ~ x)))
 
 La regresión desde el origen conserva la pendiente si primero centramos los datos
 
-```{r, fig.height=4,fig.width=4}
+```{r galton10, fig.height=4,fig.width=4}
 yc <- y - mean(y)
 xc <- x - mean(x)
 beta1 <- sum(yc * xc) / sum(xc ^ 2)
@@ -254,7 +259,7 @@ c(beta1, coef(lm(y ~ x))[2])
 
 Si se normalizan los datos la pendiente es igual al coeficiente de correlación
 
-```{r, echo=TRUE}
+```{r galton11, echo=TRUE}
 yn <- (y - mean(y))/sd(y)
 xn <- (x - mean(x))/sd(x)
 c(cor(y, x), cor(yn, xn), coef(lm(yn ~ xn))[2])
@@ -262,7 +267,7 @@ c(cor(y, x), cor(yn, xn), coef(lm(yn ~ xn))[2])
 
 Mejor recta de regresión:
 
-```{r, fig.height=4, fig.width=5, echo=FALSE}
+```{r galton12, fig.height=4, fig.width=5, echo=FALSE}
 g <- ggplot(filter(freqData, freq > 0), aes(x = parent, y = child))
 g <- g  + scale_size(range = c(2, 20), guide = "none" )
 g <- g + geom_point(colour="grey60", aes(size = freq, show_guide = FALSE))
@@ -309,7 +314,7 @@ Un coeficiente de regresión multivariada es el cambio esperado en el output ant
 # Tasas de hambre en la población infantil
 
 Instancia de trabajo
-```{r}
+```{r hambre1}
 #link descarga 
 url <- "http://apps.who.int/gho/athena/data/GHO/WHOSIS_000008.csv"
 file <- "hunger.csv"
@@ -325,14 +330,14 @@ hunger <- hunger[hunger$Sex!="Both sexes",]
 
 Sin controlar por género:
 
-```{r, fig.height=4, fig.width=5, echo=FALSE}
+```{r hambre2, fig.height=4, fig.width=5}
 lm1 <- lm(hunger$Numeric ~ hunger$Year)
 plot(hunger$Year,hunger$Numeric,pch=20,col="blue")
 ```
 
 Controlando por género (azul = niñas, verde = niños):
 
-```{r, fig.height=4, fig.width=5, echo=FALSE}
+```{r hambre3, fig.height=4, fig.width=5}
 plot(hunger$Year,hunger$Numeric,pch=20)
 #azul=niñas verde=niños
 points(hunger$Year,hunger$Numeric,pch=20,col=((hunger$Sex=="Male")*1+3))
@@ -350,7 +355,7 @@ $b_1$ = disminución del % de hambre por año
 
 $e_i$ = todas las variables no medidas
 
-```{r, fig.height=4, fig.width=5, echo=FALSE}
+```{r hambre4, fig.height=4, fig.width=5}
 lm1 <- lm(hunger$Numeric ~ hunger$Year)
 plot(hunger$Year,hunger$Numeric,pch=20,col="blue")
 lines(hunger$Year,lm1$fitted,lwd=3,col="red")
@@ -375,7 +380,7 @@ $bm_1$ = disminución del % de hambre por año en las niños
 
 $em_i$ = todas las variables no medidas
 
-```{r, fig.height=3.5,fig.width=5,fig.height=4, echo=FALSE}
+```{r hambre5, fig.height=3.5,fig.width=5,fig.height=4}
 lmM <- lm(hunger$Numeric[hunger$Sex=="Male"] ~ hunger$Year[hunger$Sex=="Male"])
 lmF <- lm(hunger$Numeric[hunger$Sex=="Female"] ~ hunger$Year[hunger$Sex=="Female"])
 plot(hunger$Year,hunger$Numeric,pch=20)
@@ -400,7 +405,7 @@ $b_2$ = disminución del % de hambre por año en niños o niñas
 
 $e^*_i$ = todas las variables no medidas
 
-```{r, fig.height=4, fig.width=5, echo=FALSE}
+```{r hambre6, fig.height=4, fig.width=5}
 lmBoth <- lm(hunger$Numeric ~ hunger$Year + hunger$Sex)
 plot(hunger$Year,hunger$Numeric,pch=20)
 points(hunger$Year,hunger$Numeric,pch=20,col=((hunger$Sex=="Male")*1+3))
@@ -422,7 +427,7 @@ $b_2 + b_3$ = disminución del % de hambre por año en los niños
 
 $e^+_i$ = todas las variables no medidas
 
-```{r, fig.height=4, fig.width=5, echo=FALSE}
+```{r hambre7, fig.height=4, fig.width=5}
 lmBoth <- lm(hunger$Numeric ~ hunger$Year + hunger$Sex + hunger$Sex*hunger$Year)
 plot(hunger$Year,hunger$Numeric,pch=20)
 points(hunger$Year,hunger$Numeric,pch=20,col=((hunger$Sex=="Male")*1+3))
@@ -432,7 +437,7 @@ abline(c(lmBoth$coeff[1] + lmBoth$coeff[3],lmBoth$coeff[2] +lmBoth$coeff[4]),col
 
 ## Resultados
 
-```{r, fig.height=4,fig.width=4}
+```{r hambre8, fig.height=4,fig.width=4}
 coefficients(lmBoth)
 ```
 
@@ -455,7 +460,7 @@ Extienda los resultados de su regresión a la población del país.
 
 # Desarrollo Ejercicio
 
-```{r}
+```{r casen1}
 #install.packages("foreign")
 #install.packages("httr")
 #install.packages("plyr")
@@ -619,7 +624,7 @@ summary(lm(logWHP ~ sexo + esc + exp + exp2 + r13 + sl, data = data, weights = e
 
 Resultados: Estimadores para la población (población = país)
 
-```{r, eval=FALSE}
+```{r casen2, eval=FALSE}
               Estimate Std. Error t value Pr(>|t|)    
 (Intercept)  7.5348155  0.0889943   84.67   <2e-16 ***
 sexomujer   -0.2591384  0.0096771  -26.78   <2e-16 ***
