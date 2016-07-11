@@ -119,93 +119,47 @@ head(galton, n=10) #primeras 10 observaciones (medidas en pulgadas)
 dim(galton) #tamaño muestral = 928 ; variables  = 2
 ```
 * Considere solo la estatura de los hijos. ¿Cómo se describe la media?
-* Una definición es que siendo $Y_i$ la estatura del hijo $i$ para $i= 1,\ldots , n$ con $n=928$entonces la media es el valor de $\mu$ que minimiza la ecuación $\sum_{i=1}^n (Y_i - \mu)^2$
+* Una definición es que siendo $Y_i$ la estatura del hijo $i$ para $i= 1,\ldots, n$ con $n=928$ entonces la media es el valor de $\mu$ que minimiza la ecuación $\sum_{i=1}^n (Y_i - \mu)^2$
 * Se tiene que $\mu = \bar Y$.
 
-## Experimento: Usar RStudio para manipular el valor de $\mu$ y observar cuál es el valor que minimiza la ecuación $\sum_{i=1}^n (Y_i - \mu)^2$
-
-Código a replicar en R
-```
-library(UsingR); data(galton)
-library(manipulate)
-myHist <- function(mu){
-    mse <- mean((galton$child - mu)^2)
-    g <- ggplot(galton, aes(x = child)) + geom_histogram(fill = "royalblue", colour = "black", binwidth=1)
-    g <- g + geom_vline(xintercept = mu, size = 2, colour = "red")
-    g <- g + ggtitle(paste("mu = ", mu, ", MSE = ", round(mse, 2), sep = ""))
-    g
-}
-manipulate(myHist(mu), mu = slider(62, 74, step = 0.5))
-```
-
-## El estimador de mínimos cuadrados es la media empírica
-```{r galton4, fig.height=4, fig.width=4, fig.align='center'}
-g <- ggplot(galton, aes(x = child)) + geom_histogram(fill = "royalblue", colour = "black", binwidth=1)
-g <- g + geom_vline(xintercept = mean(galton$child), size = 2, colour = "red")
-g
-```
-
-## Comparando la estatura de los padres e hijos
-
-El tamaño de los puntos en $(X,Y)$ representa la cantidad de observaciones que coinciden en dicho valor.
-
-```{r galton5, fig.height=6,fig.width=7,echo=FALSE}
-freqData <- as.data.frame(table(galton$child, galton$parent))
-names(freqData) <- c("child", "parent", "freq")
-freqData$child <- as.numeric(as.character(freqData$child))
-freqData$parent <- as.numeric(as.character(freqData$parent))
-g <- ggplot(filter(freqData, freq > 0), aes(x = parent, y = child))
-g <- g  + scale_size(range = c(2, 20), guide = "none" )
-g <- g + geom_point(colour="grey60", aes(size = freq, show_guide = FALSE))
-g <- g + geom_point(aes(colour=freq, size = freq))
-g <- g + scale_colour_gradient(low = "royalblue", high="lightblue")                    
-g
-```
-
-## Regresión desde el origen
-
-* $X_i$ es la estatura de los padres.
-* Se tiene un valor $\beta$ que minimiza la ecuación $\sum_{i=1}^n (Y_i - X_i \beta)^2$
-* Se tiene que el intercepto es el punto $(0,0)$ y la recta es tal que minimiza la suma de las distancias verticales al cuadrado desde los puntos de cada observación a la recta.
-* Para que el intercepto sea interpretable se debe restar la media de los datos de manera que el intercepto sea $(\bar{X},\bar{Y})$
-
-## Experimento: Usar RStudio para manipular el valor de $\beta$ y observar cuál es el valor que minimiza la ecuación $\sum_{i=1}^n (Y_i - X_i \beta)^2$
-
-```
-library(UsingR); data(galton)
-library(dplyr)
-library(manipulate)
-y <- galton$child - mean(galton$child)
-x <- galton$parent - mean(galton$parent)
-freqData <- as.data.frame(table(x, y))
-names(freqData) <- c("child", "parent", "freq")
-freqData$child <- as.numeric(as.character(freqData$child))
-freqData$parent <- as.numeric(as.character(freqData$parent))
-myPlot <- function(beta){
-  g <- ggplot(filter(freqData, freq > 0), aes(x = parent, y = child))
-  g <- g  + scale_size(range = c(2, 20), guide = "none" )
-  g <- g + geom_point(colour="grey50", aes(size = freq, show_guide = FALSE))
-  g <- g + geom_point(aes(colour=freq, size = freq))
-  g <- g + scale_colour_gradient(low = "royalblue", high="lightblue")                     
-  g <- g + geom_abline(intercept = 0, slope = beta, size = 3)
-  mse <- mean( (y - beta * x) ^2 )
-  g <- g + ggtitle(paste("beta = ", beta, "mse = ", round(mse, 3)))
-  g
-}
-manipulate(myPlot(beta), beta = slider(0, 1.2, step = 0.05))
-```
 ## Regresión
 
 ### Sin constante
-```{r galton6}
-lm(I(child - mean(child)) ~ I(parent - mean(parent)) - 1, data = galton)
+$$Y_i = \beta_1 X_i + \varepsilon_i$$
+```{r galton6_1}
+lm(child ~ parent -1, data = galton)
 ```
 
 ### Con constante
-```{r galton7}
-lm(I(child - mean(child)) ~ I(parent - mean(parent)), data = galton)
+$$Y_i = \beta_0 + \beta_1 X_i  + \varepsilon_i$$
+```{r galton6_2}
+lm(child ~ parent, data = galton)
 ```
-```{r galton8, fig.height=6,fig.width=7}
+
+### Sin constante (centrando los datos)
+$$(Y_i - \bar{Y}) = \beta_1 (X_i - \bar{X})  + \varepsilon_i$$
+$$\tilde{Y}_i = \beta_0 \beta_1 \tilde{X}_i  + \varepsilon_i$$
+```{r galton7_1}
+lm(I(child - mean(child)) ~ I(parent - mean(parent)) -1, data = galton)
+```
+
+### Con constante (centrando los datos)
+$$(Y_i - \bar{Y}) = \beta_0 + \beta_1 (X_i - \bar{X})  + \varepsilon_i$$
+$$\tilde{Y}_i = \beta_0 \beta_1 \tilde{X}_i  + \varepsilon_i$$
+```{r galton7_2}
+lm(I(child - mean(child)) ~ I(parent - mean(parent)) -1, data = galton)
+```
+
+### Observaciones
+
+* La primera regresión (sin constante) sobreestima el efecto de $X$ sobre $Y$ pues se fuerza que el intercepto sea cero
+* No es coincidente que las últimas tres regresiones entreguen un idéntico valor de $\beta_1$. 
+* Lo anterior se debe a que al no incluir el "-1" en el código en R, no estamos forzando que el intercepto sea cero y por ende no estamos sesgando el efecto de $X$ sobre $Y$.
+* En las dos últimas regresiones se observa que el intercepto al centrar los datos (es decir, al cambiar la unidad de medición y hacer que el "0" la variable sea el promedio de dicha variable) sea un valor muy pequeño corresponde a un hecho atribuible a los datos y no a que se fuerza la estimación.
+
+###  Gráfico
+
+```{r galton8, fig.height=5,fig.width=5, echo=FALSE}
 freqData <- as.data.frame(table(galton$child, galton$parent))
 names(freqData) <- c("child", "parent", "freq")
 freqData$child <- as.numeric(as.character(freqData$child))
@@ -215,8 +169,8 @@ g <- g  + scale_size(range = c(2, 20), guide = "none" )
 g <- g + geom_point(colour="grey60", aes(size = freq, show_guide = FALSE))
 g <- g + geom_point(aes(colour=freq, size = freq))
 g <- g + scale_colour_gradient(low = "royalblue", high="lightblue")                      
-lm1 <- lm(galton$child ~ galton$parent)
-g <- g + geom_abline(intercept = coef(lm1)[1], slope = coef(lm1)[2], size = 3, colour = grey(.5))
+fit <- lm(galton$child ~ galton$parent)
+g <- g + geom_abline(intercept = coef(fit)[1], slope = coef(fit)[2], size = 3, colour = grey(.5))
 g
 ```
 
