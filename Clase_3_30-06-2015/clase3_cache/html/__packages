@@ -9,6 +9,5 @@ Hmisc
 UsingR
 dplyr
 reshape
-foreign
-httr
-plyr
+proto
+ggfortify

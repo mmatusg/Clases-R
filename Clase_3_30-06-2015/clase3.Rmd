@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+library(ggplot2)
+library(ggfortify)
 ```
 
 # Modelo de Regresión Básico
@@ -261,8 +263,7 @@ E[Y | X_1 = x_1 + 1, \ldots, X_p = x_p] = (x_1 + 1) \beta_1 + \sum_{k=2}^p x_{k}
 $$
 
 $$
-E[Y | X_1 = x_1 + 1, \ldots, X_p = x_p]  - E[Y | X_1 = x_1, \ldots, X_p = x_p]$$
-$$= (x_1 + 1) \beta_1 + \sum_{k=2}^p x_{k} \beta_k + \sum_{k=1}^p x_{k} \beta_k = \beta_1 $$
+E[Y | X_1 = x_1 + 1, \ldots, X_p = x_p]  - E[Y | X_1 = x_1, \ldots, X_p = x_p] = (x_1 + 1) \beta_1 + \sum_{k=2}^p x_{k} \beta_k - \sum_{k=1}^p x_{k} \beta_k = \beta_1 $$
 Un coeficiente de regresión multivariada es el cambio esperado en el output ante un cambio en una unidad en el regresor correspondiente, manteniendo todos los demás regresores fijos.
 
 # Tasas de hambre en la población infantil
@@ -282,26 +283,11 @@ hunger <- read.csv("hunger.csv")
 hunger <- hunger[hunger$Sex!="Both sexes",]
 ```
 
-Sin controlar por género:
-
-```{r hambre2, fig.height=4, fig.width=5}
-lm1 <- lm(hunger$Numeric ~ hunger$Year)
-plot(hunger$Year,hunger$Numeric,pch=20,col="blue")
-```
-
-Controlando por género (azul = niñas, verde = niños):
-
-```{r hambre3, fig.height=4, fig.width=5}
-plot(hunger$Year,hunger$Numeric,pch=20)
-#azul=niñas verde=niños
-points(hunger$Year,hunger$Numeric,pch=20,col=((hunger$Sex=="Male")*1+3))
-```
-
 ## Modelo univariado
 
-Sin controlar por género:
+### Sin controlar por género
 
-$$Hu_i = b_0 + b_1 Y_i + e_i$$
+$$H_i = b_0 + b_1 Y_i + e_i$$
 
 $b_0$ = % de hambre en el año 0
 
@@ -311,13 +297,17 @@ $e_i$ = todas las variables no medidas
 
 ```{r hambre4, fig.height=4, fig.width=5}
 lm1 <- lm(hunger$Numeric ~ hunger$Year)
-plot(hunger$Year,hunger$Numeric,pch=20,col="blue")
-lines(hunger$Year,lm1$fitted,lwd=3,col="red")
+summary(lm1)
+
+ggplot(hunger, aes(x=Year, y=Numeric)) + geom_point(shape=21,fill="grey50") + geom_smooth(method=lm, se=FALSE) +
+  ggtitle("Tasas de hambre en la población infantil") +
+  scale_x_continuous(name = "Año") +
+  scale_y_continuous(name = "% de hambre")
 ```
 
-Controlando por género:
+### Controlando por género
 
-$$HuF_i = bf_0 + bf_1 YF_i + ef_i$$
+$$HF_i = bf_0 + bf_1 YF_i + ef_i$$
 
 $bf_0$ = % de hambre en las niñas en el año 0
 
@@ -326,7 +316,7 @@ $bf_1$ = disminución del % de hambre por año en las niñas
 $ef_i$ = todas las variables no medidas
 
 
-$$HuM_i = bm_0 + bm_1 YM_i + em_i$$
+$$HM_i = bm_0 + bm_1 YM_i + em_i$$
 
 $bm_0$ = % de hambre en los niños en el año 0
 
@@ -337,17 +327,21 @@ $em_i$ = todas las variables no medidas
 ```{r hambre5, fig.height=3.5,fig.width=5,fig.height=4}
 lmM <- lm(hunger$Numeric[hunger$Sex=="Male"] ~ hunger$Year[hunger$Sex=="Male"])
 lmF <- lm(hunger$Numeric[hunger$Sex=="Female"] ~ hunger$Year[hunger$Sex=="Female"])
-plot(hunger$Year,hunger$Numeric,pch=20)
-points(hunger$Year,hunger$Numeric,pch=20,col=((hunger$Sex=="Male")*1+3))
-lines(hunger$Year[hunger$Sex=="Male"],lmM$fitted,col="green",lwd=3)
-lines(hunger$Year[hunger$Sex=="Female"],lmF$fitted,col="blue",lwd=3)
+
+summary(lmM)
+summary(lmF)
+
+ggplot(hunger, aes(x=Year, y=Numeric, fill=Sex)) + geom_point(shape=21) + geom_smooth(method=lm, aes(color=Sex), se=FALSE) + 
+  ggtitle("Tasas de hambre en la población infantil") +
+  scale_x_continuous(name = "Año") +
+  scale_y_continuous(name = "% de hambre")
 ```
 
 ## Modelo multivariado
 
-Las dos rectas anteriores tienen la misma pendiente. Vamos a estimar el siguiente modelo:
+### Especificación 1
 
-$$Hu_i = b_0 + b_1 M_i + b_2 Y_i + e^*_i$$
+$$H_i = b_0 + b_1 M_i + b_2 Y_i + e^*_i$$
 
 $b_0$ = % de hambre en las niñas en el año 0
 
@@ -361,13 +355,12 @@ $e^*_i$ = todas las variables no medidas
 
 ```{r hambre6, fig.height=4, fig.width=5}
 lmBoth <- lm(hunger$Numeric ~ hunger$Year + hunger$Sex)
-plot(hunger$Year,hunger$Numeric,pch=20)
-points(hunger$Year,hunger$Numeric,pch=20,col=((hunger$Sex=="Male")*1+3))
-abline(c(lmBoth$coeff[1],lmBoth$coeff[2]),col="blue",lwd=3)
-abline(c(lmBoth$coeff[1] + lmBoth$coeff[3],lmBoth$coeff[2] ),col="green",lwd=3)
+summary(lmBoth)
 ```
 
-$$Hu_i = b_0 + b_1 M_i + b_2 Y_i + b_3 (M_i \cdot Y_i) + e^+_i$$
+### Especificación 2
+
+$$H_i = b_0 + b_1 M_i + b_2 Y_i + b_3 (M_i \cdot Y_i) + e^+_i$$
 
 $b_0$ = % de hambre en las niñas en el año 0
 
@@ -382,215 +375,14 @@ $b_2 + b_3$ = disminución del % de hambre por año en los niños
 $e^+_i$ = todas las variables no medidas
 
 ```{r hambre7, fig.height=4, fig.width=5}
-lmBoth <- lm(hunger$Numeric ~ hunger$Year + hunger$Sex + hunger$Sex*hunger$Year)
-plot(hunger$Year,hunger$Numeric,pch=20)
-points(hunger$Year,hunger$Numeric,pch=20,col=((hunger$Sex=="Male")*1+3))
-abline(c(lmBoth$coeff[1],lmBoth$coeff[2]),col="blue",lwd=3)
-abline(c(lmBoth$coeff[1] + lmBoth$coeff[3],lmBoth$coeff[2] +lmBoth$coeff[4]),col="green",lwd=3)
+lmBoth2 <- lm(hunger$Numeric ~ hunger$Year + hunger$Sex + hunger$Sex*hunger$Year)
+summary(lmBoth2)
 ```
 
-## Resultados
+# Residuos
 
-```{r hambre8, fig.height=4,fig.width=4}
-coefficients(lmBoth)
+```{r residuos1}
+autoplot(lmBoth, label.size = 3)
+autoplot(lmBoth2, label.size = 3)
 ```
 
-# Ejercicio
-
-Usando la encuesta <a href="http://pachamaltese.github.io/analisis-de-datos-unab/laboratorios/laboratorio4/casen2013.dta.zip">CASEN 2013</a> estime un modelo log-lineal
-$$ 
-\log(y_i) = \beta_0 + \sum_{i=1}^n \beta_i x_i + \varepsilon_i
-$$
-que permita predecir el salario por hora de los profesionales chilenos de entre 35 y 45 años que tienen una jornada laboral de al menos 30 horas por semana.
-
-Considere como regresores las variables:
- 
-* Sexo
-* Experiencia laboral
-* Si la persona reside en la Región Metropolitana
-* Si la persona trabaja en la Administración Pública
-
-Extienda los resultados de su regresión a la población del país.
-
-# Desarrollo Ejercicio
-
-```{r casen1}
-#install.packages("foreign")
-#install.packages("httr")
-#install.packages("plyr")
-
-library(foreign) #para leer archivos de Stata, SPSS, etc
-library(httr) #permite descargar desde la web
-library(plyr) #comandos útiles para bases de datos
-
-###########################
-# Diccionario de variables
-###########################
-
-# Lo primero es consultar el diccionario de variables donde aparece la explicación de los códigos y la naturaleza de las variables
-# http://observatorio.ministeriodesarrollosocial.gob.cl/documentos/Libro_de_Codigos_Casen_2013_Base_Principal_Metodologia_Nueva.pdf
-
-####################################
-# Descargar y cargar base de datos
-####################################
-
-url <- "http://pachamaltese.github.io/analisis-de-datos-unab/laboratorio4/casen2013.dta.zip"
-zip <- "casen2013.dta.zip"
-dta <- "casen2013.dta"
-
-if(!file.exists(zip)) {
-  print("descargando")
-  download.file(url, file, method="curl")
-}
-
-if(!file.exists(dta) & file.exists(zip)) {
-  unzip(zip)
-  casen <- read.dta(dta)
-}
-
-if(file.exists(dta)) {
-  casen <- read.dta(dta)
-}
-
-####################################
-# Limpiar datos y generar variables
-####################################
-
-# creo una copia que ahorrará tiempo si quiero retroceder algunos pasos
-# o sea, si me equivoco vuelvo a ejecutar esta línea y la variable casen sigue intacta (ahorra tiempo)
-data <- casen
-
-# conservo en memoria únicamente las variables relevantes para la regresión
-# para esto hay que consultar el diccionario de variables
-keep <- c("expr", "yoprcor", "edad", "esc", "sexo", "region", "rama1", "o10")
-data <- data[keep]
-
-# veo el tipo de variables en memoria
-str(data) #hay variables enteras, factores y numéricas 
-
-# saco las filas que tengan celdas vacías (o sino habrá que hacer pasos adicionales al final)
-data <- na.omit(data)
-
-# hay que crear la variable "logaritmo del salario por hora"
-# se consideran los datos de los trabajadores con jornada > 30 horas/semana
-# para el cálculo hay que calcular 
-# salario ($/mes) * 12 (meses/año) / jornada (horas/semana) * 52 (semanas/año)
-data <- data[data$o10 > 30,]
-data$WHP <- (data$yoprcor*12)/(data$o10*52)
-data$logWHP <- log(data$WHP)
-
-# conservo solo los datos que corresponden al tramo de edad entre 35 y 45 años
-data <- data[(data$edad >= 35 & data$edad <= 45),]
-
-# conservo solo los datos que corresponden al nivel de escolaridad pedido
-# profesional en Chile = 5 años (o más) de educación superior
-# entonces Experiencia Laboral = Edad - Años de Escolaridad ("esc") - 5 (duración mínima de estudios profesionales)
-# la ecuación de arriba puede tomar valores negativos ya que hay personas en la encuesta que se encuentran estudiando 
-# y trabajan part-time, realizan continuidad de estudios, tienen post-grado, etc. entonces hay que descartar esos casos
-data$exp <- data$edad - data$esc - 5
-data <- data[data$exp >= 0,]
-data$exp2 <- (data$exp)^2
-
-# hay que generar una variable binaria para cada región
-# antes de hacer cualquier cosa veo como están asignados los niveles del factor región
-levels(data$region)
-
-# los nombres de los niveles contienen espacios, entonces asigno nombres simples
-# (ver el excel que usé para hacer que el proceso sea eficiente)
-data$region <- revalue(data$region, c("i. tarapaca"="r1",
-                                      "ii. antofagasta"="r2",
-                                      "iii. atacama"="r3",
-                                      "iv. coquimbo"="r4",
-                                      "v. valpara\xedso"="r5",
-                                      "vi. o higgins"="r6",
-                                      "vii. maule"="r7",
-                                      "viii. biob\xedo"="r8",
-                                      "ix. la araucan\xeda"="r9",
-                                      "x. los lagos"="r10",
-                                      "xi. ays\xe9n"="r11",
-                                      "xii. magallanes"="r12",
-                                      "metropolitana"="r13",
-                                      "xiv. los r\xedos"="r14",
-                                      "xv. arica y parinacota"="r15"))
-
-# verifico que los nombres asignados a los niveles hayan cambiado
-levels(data$region)
-
-# para crear las variables binarias uso el comando for de manera que no hay que repetir el comando para cada región
-for(i in unique(data$region)) {
-  data[paste(i, sep="")] <- ifelse(data$region == i, 1, 0)
-}
-
-# hay que generar una variable binaria para cada industria (o rama)
-# veo como están asignados los niveles del factor región
-levels(data$rama1)
-
-# aparece un nivel que corresponde a "sin clasificar" (nivel X), entonces debo sacar ese nivel y volver a definir los niveles
-data<-data[data$rama1 != "x. no bien especificado",]
-data$rama1 <- factor(data$rama1) 
-
-# verifico los cambios
-levels(data$rama1)
-
-# los nombres de los niveles contienen espacios, entonces asigno nombres simples
-data$rama1 <- revalue(data$rama1, c("a. agricultura, ganader\xeda, caza y silvicultura"="sa",
-                                    "b. pesca"="sb",
-                                    "c. explotaci\xf3n de minas y canteras"="sc",
-                                    "d. industrias manufactureras"="sd",
-                                    "e. suministro de electricidad, gas y agua"="se",
-                                    "f.construcci\xf3n"="sf",
-                                    "g. comercio al por mayor y al por menor"="sg",
-                                    "h. hoteles y restaurantes"="sh",
-                                    "i. transporte, almacenamiento y comunicaciones"="si",
-                                    "j. intermediaci\xf3n financiera"="sj",
-                                    "k. actividades inmobiliarias, empresariales y de alquiler"="sk",
-                                    "l.administrasci\xf3n p\xfablica y defensa"="sl",
-                                    "m. ense\xf1anza"="sm",
-                                    "n. servicios sociales y de salud"="sn",
-                                    "o. otras actividades de servicios comunitarios, sociales y personales"="so",
-                                    "p. hogares privados con servicio dom\xe9stico"="sp",
-                                    "q.organizaciones y organos extraterritoriales"="sq"))
-
-# verifico los cambios
-levels(data$rama1)
-
-# para crear las variables binarias uso el comando for de manera que no hay que repetir el comando para cada región
-
-for(i in unique(data$rama1)) {
-  data[paste(i, sep="")] <- ifelse(data$rama1 == i, 1, 0)
-}
-
-# si no usaba na.omit al principio hay que usar esto
-#drop <- c("NA")
-#data <- data[,!(names(data) %in% drop)]
-#data <- data[complete.cases(data),]
-
-#############
-# Regresiones
-#############
-
-# estimadores para la muestra
-summary(lm(logWHP ~ sexo + esc + exp + exp2 + r13 + sl, data = data))
-
-# estimadores para la población (población = país)
-summary(lm(logWHP ~ sexo + esc + exp + exp2 + r13 + sl, data = data, weights = expr))
-```
-
-Resultados: Estimadores para la población (población = país)
-
-```{r casen2, eval=FALSE}
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  7.5348155  0.0889943   84.67   <2e-16 ***
-sexomujer   -0.2591384  0.0096771  -26.78   <2e-16 ***
-esc          0.1346419  0.0021693   62.07   <2e-16 ***
-exp         -0.1681013  0.0066858  -25.14   <2e-16 ***
-exp2         0.0038441  0.0001431   26.86   <2e-16 ***
-r13          0.1953442  0.0096526   20.24   <2e-16 ***
-sl           0.2222964  0.0204180   10.89   <2e-16 ***
-
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-Residual standard error: 5.793 on 18174 degrees of freedom
-Multiple R-squared:  0.371,	Adjusted R-squared:  0.3708 
-F-statistic:  1787 on 6 and 18174 DF,  p-value: < 2.2e-16
-```
