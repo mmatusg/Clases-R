@@ -379,10 +379,89 @@ lmBoth2 <- lm(hunger$Numeric ~ hunger$Year + hunger$Sex + hunger$Sex*hunger$Year
 summary(lmBoth2)
 ```
 
-# Residuos
+### Residuos
 
 ```{r residuos1}
 autoplot(lmBoth, label.size = 3)
 autoplot(lmBoth2, label.size = 3)
+```
+
+# Ejemplo: Economic Fluctuations in the United States 1921–1941 (Klein)
+
+* El paper de Klein es un paper clásico de la economía keynesiana. 
+* Propone un mecanismo de funcionamiento de la economía bastante simple
+* Ideal para estudiar regresiones en una primera etapa
+* Los datos originales están disponibles en la extensión `sem`
+
+Las variables de la base de datos original son:
+
+* Year: 1921–1941
+* C = private consumption expenditure.
+* P = profits net of business taxes.
+* WP = wage bill of the private sector.
+* WG = wage bill of the government sector.
+* I = (net) private investment.
+* K = stock of (private) capital goods (at the end of the year).
+* A = an index of the passage of time, 1931 = zero.
+* G = government expenditure plus net exports.
+* T = business taxes.
+* X = gross national product.
+
+Las ecuaciones que Klein testea son:
+$$Ct = \alpha_1 + \alpha_2 P_t + \alpha_3 P_{t-1} + \alpha_4 (WP_t + WG_t)$$
+$$I_t = \beta_1 + \beta_2 P_t + \beta_3 P_{t-1} - \beta_4 K_{t-1}$$
+$$WPt = \gamma_1 + \gamma_2 X_t + \gamma_3 X_{t-1} + \gamma_4 A$$
+$$Pt = X_t - WP_t - T_t$$
+$$K_t = K_{t-1} + I_t$$
+$$X_t = C_t + I_t + G_t$$
+
+Veamos las variables de la base de datos:
+```{r klein0}
+str(Klein)
+```
+
+
+En el caso de la ecuación $Ct = \alpha_1 + \alpha_2 P_t + \alpha_3 P_{t-1} + \alpha_4 (WP_t + WG_t)$ lo primero es construir las variables `P.lag` y `X.lag` que no están en los datos.
+
+Luego $Ct = \alpha_1 + \alpha_2 P_t + \alpha_3 P_{t-1} + \alpha_4 (WP_t + WG_t)$ en R es
+```
+C ~ P + P.lag + I(Wp + Wg)
+```
+
+Para estimar los coeficientes de esta ecuación se hará lo ya visto anteriormente
+```{r klein1}
+Klein$P.lag <- c(NA, Klein$P[-22])
+Klein$X.lag <- c(NA, Klein$X[-22])
+
+summary(lm(C ~ P + P.lag + I(Wp + Wg), data=Klein))
+```
+
+Para estimar los coeficientes de $I$ y $Wp$ se procede del mismo modo
+```{r klein2}
+summary(lm(I ~ P + P.lag + K.lag, data=Klein))
+summary(lm(Wp ~ X + X.lag + I(Year - 1931), data=Klein))
+```
+
+El paper original utiliza una metodología denominada Mínimos Cuadrados en dos Etapas y luego Structural Equation Modelling ¿por qué?
+
+Estas son las regresiones con la metodología del paper original:
+```{r klein3}
+#install.packages("sem")
+library(sem)
+
+Klein$P.lag <- c(NA, Klein$P[-22])
+Klein$X.lag <- c(NA, Klein$X[-22])
+
+summary(tsls(C ~ P + P.lag + I(Wp + Wg), 
+    instruments=~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag,
+    data=Klein))
+    
+summary(tsls(I ~ P + P.lag + K.lag,
+    instruments=~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag,
+    data=Klein))
+    
+summary(tsls(Wp ~ X + X.lag + I(Year - 1931),
+    instruments=~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag,
+    data=Klein))
 ```
 
