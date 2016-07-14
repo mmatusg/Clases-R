@@ -593,7 +593,7 @@ summary(lmBoth2)</code></pre>
 <li>T = business taxes.</li>
 <li>X = gross national product.</li>
 </ul>
-<p>Las ecuaciones que Klein testea son: <span class="math display">\[Ct = \alpha_1 + \alpha_2 P_t + \alpha_3 P_{t-1} + \alpha_4 (WP_t + WG_t)\]</span> <span class="math display">\[I_t = \beta_1 + \beta_2 P_t + \beta_3 P_{t-1} - \beta_4 K_{t-1}\]</span> <span class="math display">\[WPt = \gamma_1 + \gamma_2 X_t + \gamma_3 X_{t-1} + \gamma_4 A\]</span> <span class="math display">\[Pt = X_t - WP_t - T_t\]</span> <span class="math display">\[K_t = K_{t-1} + I_t\]</span> <span class="math display">\[X_t = C_t + I_t + G_t\]</span></p>
+<p>Las ecuaciones que Klein testea son: <span class="math display">\[Ct = \alpha_1 + \alpha_2 P_t + \alpha_3 P_{t-1} + \alpha_4 (WP_t + WG_t) + e_t\]</span> <span class="math display">\[I_t = \beta_1 + \beta_2 P_t + \beta_3 P_{t-1} - \beta_4 K_{t-1} + e_t\]</span> <span class="math display">\[WPt = \gamma_1 + \gamma_2 X_t + \gamma_3 X_{t-1} + \gamma_4 A + e_t\]</span> <span class="math display">\[Pt = X_t - WP_t - T_t\]</span> <span class="math display">\[K_t = K_{t-1} + I_t\]</span> <span class="math display">\[X_t = C_t + I_t + G_t\]</span></p>
 <p>Veamos las variables de la base de datos:</p>
 <pre class="r"><code>str(Klein)</code></pre>
 <pre><code>## 'data.frame':    22 obs. of  10 variables:
@@ -611,8 +611,8 @@ summary(lmBoth2)</code></pre>
 <p>Luego <span class="math inline">\(Ct = \alpha_1 + \alpha_2 P_t + \alpha_3 P_{t-1} + \alpha_4 (WP_t + WG_t)\)</span> en R es</p>
 <pre><code>C ~ P + P.lag + I(Wp + Wg)</code></pre>
 <p>Para estimar los coeficientes de esta ecuación se hará lo ya visto anteriormente</p>
-<pre class="r"><code>Klein$P.lag &lt;- c(NA, Klein$P[-22])
-Klein$X.lag &lt;- c(NA, Klein$X[-22])
+<pre class="r"><code>Klein$P.lag &lt;- c(NA, Klein$P[-length(Klein)])
+Klein$X.lag &lt;- c(NA, Klein$X[-length(Klein)])
 
 summary(lm(C ~ P + P.lag + I(Wp + Wg), data=Klein))</code></pre>
 <pre><code>## 
@@ -621,21 +621,21 @@ summary(lm(C ~ P + P.lag + I(Wp + Wg), data=Klein))</code></pre>
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -2.17345 -0.43597 -0.03466  0.78508  1.61650 
+## -2.01178 -0.34164  0.07204  0.70489  1.30917 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept) 16.23660    1.30270  12.464 5.62e-10 ***
-## P            0.19293    0.09121   2.115   0.0495 *  
-## P.lag        0.08988    0.09065   0.992   0.3353    
-## I(Wp + Wg)   0.79622    0.03994  19.933 3.16e-13 ***
+## (Intercept) 17.40642    1.21879  14.282 6.73e-11 ***
+## P           -0.21377    0.20510  -1.042   0.3119    
+## P.lag        0.54785    0.23042   2.378   0.0294 *  
+## I(Wp + Wg)   0.75169    0.04122  18.236 1.35e-12 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 1.026 on 17 degrees of freedom
+## Residual standard error: 0.9137 on 17 degrees of freedom
 ##   (1 observation deleted due to missingness)
-## Multiple R-squared:  0.981,  Adjusted R-squared:  0.9777 
-## F-statistic: 292.7 on 3 and 17 DF,  p-value: 7.938e-15</code></pre>
+## Multiple R-squared:  0.9849, Adjusted R-squared:  0.9823 
+## F-statistic: 370.2 on 3 and 17 DF,  p-value: 1.118e-15</code></pre>
 <p>Para estimar los coeficientes de <span class="math inline">\(I\)</span> y <span class="math inline">\(Wp\)</span> se procede del mismo modo</p>
 <pre class="r"><code>summary(lm(I ~ P + P.lag + K.lag, data=Klein))</code></pre>
 <pre><code>## 
@@ -681,83 +681,6 @@ summary(lm(C ~ P + P.lag + I(Wp + Wg), data=Klein))</code></pre>
 ##   (1 observation deleted due to missingness)
 ## Multiple R-squared:  0.9874, Adjusted R-squared:  0.9852 
 ## F-statistic: 444.6 on 3 and 17 DF,  p-value: 2.411e-16</code></pre>
-<p>El paper original utiliza una metodología denominada Mínimos Cuadrados en dos Etapas y luego Structural Equation Modelling ¿por qué?</p>
-<p>Estas son las regresiones con la metodología del paper original:</p>
-<pre class="r"><code>#install.packages(&quot;sem&quot;)
-library(sem)
-
-Klein$P.lag &lt;- c(NA, Klein$P[-22])
-Klein$X.lag &lt;- c(NA, Klein$X[-22])
-
-summary(tsls(C ~ P + P.lag + I(Wp + Wg), 
-    instruments=~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag,
-    data=Klein))</code></pre>
-<pre><code>## 
-##  2SLS Estimates
-## 
-## Model Formula: C ~ P + P.lag + I(Wp + Wg)
-## 
-## Instruments: ~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag
-## 
-## Residuals:
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## -1.8930 -0.6163 -0.2459  0.0000  0.8854  2.0030 
-## 
-##                Estimate  Std. Error  t value   Pr(&gt;|t|)    
-## (Intercept) 16.55475577  1.46797870 11.27725 2.5869e-09 ***
-## P            0.01730221  0.13120458  0.13187   0.896634    
-## P.lag        0.21623404  0.11922168  1.81371   0.087413 .  
-## I(Wp + Wg)   0.81018270  0.04473506 18.11069 1.5050e-12 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 1.1356586 on 17 degrees of freedom</code></pre>
-<pre class="r"><code>summary(tsls(I ~ P + P.lag + K.lag,
-    instruments=~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag,
-    data=Klein))</code></pre>
-<pre><code>## 
-##  2SLS Estimates
-## 
-## Model Formula: I ~ P + P.lag + K.lag
-## 
-## Instruments: ~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag
-## 
-## Residuals:
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## -3.2910 -0.8069  0.1423  0.0000  0.8601  1.7960 
-## 
-##                Estimate  Std. Error  t value  Pr(&gt;|t|)   
-## (Intercept) 20.27820896  8.38324891  2.41890 0.0270705 * 
-## P            0.15022182  0.19253359  0.78024 0.4459798   
-## P.lag        0.61594358  0.18092585  3.40440 0.0033755 **
-## K.lag       -0.15778764  0.04015207 -3.92975 0.0010797 **
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 1.3071491 on 17 degrees of freedom</code></pre>
-<pre class="r"><code>summary(tsls(Wp ~ X + X.lag + I(Year - 1931),
-    instruments=~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag,
-    data=Klein))</code></pre>
-<pre><code>## 
-##  2SLS Estimates
-## 
-## Model Formula: Wp ~ X + X.lag + I(Year - 1931)
-## 
-## Instruments: ~1 + G + T + Wg + I(Year - 1931) + K.lag + P.lag + X.lag
-## 
-## Residuals:
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## -1.2940 -0.4734  0.0145  0.0000  0.4487  1.1960 
-## 
-##                  Estimate Std. Error  t value   Pr(&gt;|t|)    
-## (Intercept)    1.50029689 1.27568637  1.17607 0.25577411    
-## X              0.43885907 0.03960266 11.08155 3.3679e-09 ***
-## X.lag          0.14667382 0.04316395  3.39806 0.00342209 ** 
-## I(Year - 1931) 0.13039569 0.03238839  4.02600 0.00087642 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 0.7671553 on 17 degrees of freedom</code></pre>
 </div>
 
 
