@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="PachÃ¡" />
+<meta name="author" content="Pachá" />
 
 <meta name="date" content="2016-06-20" />
 
@@ -117,7 +117,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">Clase 2</h1>
-<h4 class="author"><em>PachÃ¡</em></h4>
+<h4 class="author"><em>Pachá</em></h4>
 <h4 class="date"><em>June 20, 2016</em></h4>
 
 </div>
@@ -126,16 +126,16 @@ $(document).ready(function () {
 <div id="primera-tarea" class="section level1">
 <h1>Primera tarea</h1>
 <ul>
-<li>Ejecutar el siguiente cÃ³digo</li>
+<li>Ejecutar el siguiente código</li>
 </ul>
-<pre class="r"><code>exports_data &lt;- read.csv(&quot;copper_data.csv)
+<pre class="r"><code>exports_data &lt;- read.csv(&quot;copper_data.csv”)
 library(ggplot2)
 ggplot() + geom_line(aes(y = export, x = year, colour = product), data = exports_data, stat=&quot;identity&quot;)</code></pre>
 <ul>
-<li>Luego editar el cÃ³digo anterior para obtener
+<li>Luego editar el código anterior para obtener
 <ul>
-<li>GrÃ¡fico de barras</li>
-<li>GrÃ¡fico de puntos</li>
+<li>Gráfico de barras</li>
+<li>Gráfico de puntos</li>
 </ul></li>
 </ul>
 <div id="parte-1" class="section level2">
@@ -160,8 +160,8 @@ ggplot() + geom_line(aes(y = export, x = year, colour = product),
 <div id="segunda-tarea" class="section level1">
 <h1>Segunda tarea</h1>
 <ul>
-<li>Crear un grafico de puntos que relacione EducaciÃ³n (eje x) y Fertilidad (eje y)</li>
-<li>En otro grÃ¡fico repetir lo mismo pero agregando una lÃ­nea de tendencia</li>
+<li>Crear un grafico de puntos que relacione Educación (eje x) y Fertilidad (eje y)</li>
+<li>En otro gráfico repetir lo mismo pero agregando una línea de tendencia</li>
 </ul>
 <pre class="r"><code>ggplot() + geom_point(aes(y = Fertility, x = Education),
                      data = swiss, stat=&quot;identity&quot;)</code></pre>
@@ -171,7 +171,7 @@ ggplot() + geom_line(aes(y = export, x = year, colour = product),
 </div>
 <div id="tercera-tarea" class="section level1">
 <h1>Tercera tarea</h1>
-<p>Obtener la correlaciÃ³n entre todas las variables de la base de datos âswissâ</p>
+<p>Obtener la correlación entre todas las variables de la base de datos “swiss”</p>
 <pre class="r"><code>cor(swiss, method=&quot;pearson&quot;)</code></pre>
 <pre><code>##                   Fertility Agriculture Examination   Education   Catholic
 ## Fertility         1.0000000  0.35307918  -0.6458827 -0.66378886  0.4636847
@@ -210,11 +210,11 @@ ggpairs(swiss,
 <h1>Cuarta tarea</h1>
 <ul>
 <li>Descargar el archivo <a href="http://pacha.hk/clases_profesor_mario_matus/clase2/gini_por_regiones.xlsx">gini_por_regiones.xlsx</a> y abrirlo en R</li>
-<li>Graficar la evoluciÃ³n del Gini de la RegiÃ³n Metropolitana</li>
+<li>Graficar la evolución del Gini de la Región Metropolitana</li>
 <li>A nivel nacional
 <ul>
-<li>Â¿Se puede decir que ha mejorado/empeorado la desigualdad entre 1990 y 2008?</li>
-<li>Â¿CuÃ¡l es el valor p del estadÃ­stico asociado y la media del cambio?</li>
+<li>¿Se puede decir que ha mejorado/empeorado la desigualdad entre 1990 y 2008?</li>
+<li>¿Cuál es el valor p del estadístico asociado y la media del cambio?</li>
 </ul></li>
 </ul>
 <pre class="r"><code>library(XLConnect)
