@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALS
 library(ggplot2)
 library(GGally)
 library(ggfortify)
+library(XLConnect)
 ```
 
 # Ejercicio 1
@@ -158,8 +159,48 @@ Finalmente hay que observar los gráficos de residuos
 autoplot(fit6, label.size = 3)
 ```
 
+# Ejercicio 4
 
-# Ejercicio 3
+Reproducir la figura 13 del libro *Why Information Grows*. Luego realizar una regresión adecuada e interpretar.
+
+# Desarrollo ejercicio
+
+## Figure 13a. GDP per capita versus export diversity for year 2000.
+```{r wig1}
+data <- readWorksheetFromFile("year_2000_data.xlsx", sheet = "Sheet1", region = "A1:I125")
+pal <- c("#c93845", "#a6b6b6", "#3ab6dc", "#28aa4d")
+
+fig13a <- ggplot(data, aes(x = diversity, y = GDP_PC_PPP, fill = Group, size = I(Size))) +
+  geom_point(shape = 21) +
+  scale_y_log10() +
+  labs(x = "Diversity\n (number of products exported, measured in standard deviations of world average)", 
+       y = "GDP per capita (at power purchasing parity)") +
+  scale_fill_manual(values = pal) +
+  geom_smooth(method=lm, se=FALSE, show_guide=FALSE) 
+fig13a
+```
+
+## Figure 13b. GDP per capita versus economic complexity for year 2000.
+
+```{r wig2}
+fig13b <- ggplot(data, aes(x = ECI, y = GDP_PC_PPP, fill = Group, size = I(Size))) +
+  geom_point(shape = 21) +
+  scale_y_log10() +
+  labs(x = "Economic Complexity\n (measured considering the diversity of countries and the ubiquity of products they export)", 
+       y = "GDP per capita (at power purchasing parity)") +
+  scale_fill_manual(values = pal) +
+  geom_smooth(method=lm, se=FALSE, show_guide=FALSE) 
+fig13b
+```
+
+```{r wig3}
+fit1 <- lm(GDP_PC_PPP ~ diversity, data)
+fit2 <- lm(GDP_PC_PPP ~ ECI, data)
+summary(fit1)
+summary(fit2)
+```
+
+# Ejercicio 4
 
 Usando la encuesta <a href="http://pachamaltese.github.io/analisis-de-datos-unab/laboratorios/laboratorio4/casen2013.dta.zip">CASEN 2013</a> estime un modelo log-lineal
 $$ 
