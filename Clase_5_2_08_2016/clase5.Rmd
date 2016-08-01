@@ -1,0 +1,222 @@
+---
+title: "Clase 4"
+author: "Pachá"
+date: "June 19, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+library(ggplot2)
+library(GGally)
+library(ggfortify)
+library(XLConnect)
+```
+
+# Ejercicio 1
+
+Trabajaremos sobre la base de [On Reproducible Econometric Research](http://www.econ.uiuc.edu/~roger/research/repro/) (Koenker & Zeileis, 2009)
+
+Replicar los resultados de las tablas 1-6 de *A contribution to the empirics of economic growth* (Mankiw, Romer & Weil, 1992).
+
+Variables:
+
+* $GDP$: PIB por habitante perteneciente a la población en edad de trabajar (años 1960 y 1985)
+* $IONY$: Porcentaje del PIB destinado a inversión (promedio anual en el periodo 1960-1985)
+* $POPGRO$: Tasa de crecimiento de la población en edad de trabajar (promedio anual en el periodo 1960-1985)
+* $SCHOOL$: Porcentaje de la población en edad de trabajar que cursa la educación secundaria (promedio anual en el periodo 1960-1985)
+* $LR$: Tasa de alfabetización de la población adulta (año 1960)
+
+Consideraciones:
+
+* En los datos 999.00 y 999.00 significa "dato no disponible"
+
+Indicación: Usar la siguiente función, `lmtab` para resumir las regresiones.
+```{r lmtab, eval=FALSE}
+lmtab <- function(obj, vcov. = vcov, ...) {
+  x <- t(coeftest(obj, vcov. = vcov., ...)[,1:2])
+  x <- structure(as.vector(x), .Names = as.vector(rbind(colnames(x),
+    paste(colnames(x), "SD", sep = "_"))))  
+  c(x, unlist(summary(obj)[c("adj.r.squared", "sigma")]))
+}
+
+# ejemplo de uso
+cbind("reg1" = lmtab(reg1),
+      "reg2" = lmtab(reg2)
+      )
+```
+
+
+# Desarrollo Ejercicio 1
+
+## Leer datos
+
+```{r leer_datos}
+# paquetes
+library("sandwich")
+
+# leer datos
+MRW <- read.table("data_mrw", header = TRUE, na.strings = c("-999.0", "-999.00"))
+# ajustar las unidades como lo señala el paper
+mrw <- MRW
+mrw$IONY <- mrw$IONY/100
+mrw$POPGRO <- mrw$POPGRO/100
+mrw$SCHOOL <- mrw$SCHOOL/100
+```
+
+## Tabla I
+
+Regresión:
+$$\log(GDP_{1985,c}) = \beta_0 + \beta_1\log(IONY_{1985,c}) + \beta_2\log(POPGRO_{1985,c} + 0.05) + \varepsilon_{c}$$
+
+En el artículo se estiman los coeficientes en tres casos (se distinguen usando variables binarias):
+* Economías no exportadoras de petróleo
+* Economías intermedias
+* Economías OCDE
+
+```{r tabla_I}
+# tabla I
+mrw_1n <- lm(log(GDP85) ~ log(IONY) + log(POPGRO + 0.05), data = mrw, subset = NONOIL == 1)
+mrw_1i <- lm(log(GDP85) ~ log(IONY) + log(POPGRO + 0.05), data = mrw, subset = INTER == 1)
+mrw_1o <- lm(log(GDP85) ~ log(IONY) + log(POPGRO + 0.05), data = mrw, subset = OECD == 1)
+summary(mrw_1n)
+summary(mrw_1i)
+summary(mrw_1o)
+
+lmtab <- function(obj, vcov. = vcov, ...) {
+  x <- t(coeftest(obj, vcov. = vcov., ...)[,1:2])
+  x <- structure(as.vector(x), .Names = as.vector(rbind(colnames(x),
+    paste(colnames(x), "SD", sep = "_"))))  
+  c(x, unlist(summary(obj)[c("adj.r.squared", "sigma")]))
+}
+
+cbind("mrw_1n" = lmtab(mrw_1n),
+  "mrw_1i" = lmtab(mrw_1i),
+  "mrw_1o" = lmtab(mrw_1o)
+)
+```
+
+## Tabla II
+
+Regresión:
+$$\log(GDP_{1985,c}) = \beta_0 + \beta_1\log(IONY_{1985,c}) + \beta_2\log(POPGRO_{1985,c} + 0.05) + \beta_3\log(SCHOOL_{1985,c}) + \varepsilon_{c}$$
+
+Se distinguen los mismos casos de la Tabla I.
+
+```{r tabla_II}
+# tabla II 
+mrw_2n <- lm(log(GDP85) ~ log(IONY) + log(POPGRO + 0.05) + log(SCHOOL), data = mrw, subset = NONOIL == 1)
+mrw_2i <- lm(log(GDP85) ~ log(IONY) + log(POPGRO + 0.05) + log(SCHOOL), data = mrw, subset = INTER == 1)
+mrw_2o <- lm(log(GDP85) ~ log(IONY) + log(POPGRO + 0.05) + log(SCHOOL), data = mrw, subset = OECD == 1)
+summary(mrw_2n)
+summary(mrw_2i)
+summary(mrw_2o)
+
+cbind("mrw_2n" = lmtab(mrw_1n),
+  "mrw_2i" = lmtab(mrw_2i),
+  "mrw_2o" = lmtab(mrw_2o)
+)
+```
+
+## Tabla III
+
+Regresión:
+$$\log(GDP_{1985,c}) - \log(GDP_{1960,c}) = \beta_0 + \beta_1\log(GDP_{1960,c}) + \varepsilon_{c}$$
+
+Se distinguen los mismos casos de la Tabla I.
+
+```{r tabla_III}
+## tabla III
+mrw_3n <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60), data = mrw, subset = NONOIL == 1)
+mrw_3i <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60), data = mrw, subset = INTER == 1)
+mrw_3o <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60), data = mrw, subset = OECD == 1)
+summary(mrw_3n)
+summary(mrw_3i)
+summary(mrw_3o)
+
+cbind("mrw_3n" = lmtab(mrw_3n),
+  "mrw_3i" = lmtab(mrw_3i),
+  "mrw_3o" = lmtab(mrw_3o)
+)
+```
+
+## Tabla IV
+
+Regresión:
+$$\log(GDP_{1985,c}) - \log(GDP_{1960,c}) = \beta_0 + \beta_1\log(GDP_{1960,c}) + \beta_2\log(IONY_{1985,c}) + \beta_3\log(POPGRO_{1985,c} + 0.05) + \varepsilon_{c}$$
+
+Se distinguen los mismos casos de la Tabla I.
+
+```{r tabla_IV}
+# tabla IV
+mrw_4n <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + log(IONY) + log(POPGRO + 0.05),
+             data = mrw, subset = NONOIL == 1)
+mrw_4i <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + log(IONY) + log(POPGRO + 0.05),
+             data = mrw, subset = INTER == 1)
+mrw_4o <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + log(IONY) + log(POPGRO + 0.05),
+             data = mrw, subset = OECD == 1)
+summary(mrw_4n)
+summary(mrw_4i)
+summary(mrw_4o)
+
+cbind("mrw_4n" = lmtab(mrw_4n),
+  "mrw_4i" = lmtab(mrw_4i),
+  "mrw_4o" = lmtab(mrw_4o)
+)
+```
+
+## Tabla V
+
+Regresión:
+$$\log(GDP_{1985,c}) - \log(GDP_{1960,c}) = \beta_0 + \beta_1\log(GDP_{1960,c}) + \beta_2\log(IONY_{1985,c}) +  \beta_3\log(POPGRO_{1985,c} + 0.05)$$
+$$+ \beta_4\log(SCHOOL_{1985,c}) +\varepsilon_{c}$$
+
+Se distinguen los mismos casos de la Tabla I.
+
+```{r tabla_V}
+# tabla V
+mrw_5n <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + log(IONY) + log(POPGRO + 0.05) + log(SCHOOL),
+             data = mrw, subset = NONOIL == 1)
+mrw_5i <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + log(IONY) + log(POPGRO + 0.05) + log(SCHOOL),
+             data = mrw, subset = INTER == 1)
+mrw_5o <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + log(IONY) + log(POPGRO + 0.05) + log(SCHOOL),
+             data = mrw, subset = OECD == 1)
+summary(mrw_5n)
+summary(mrw_5i)
+summary(mrw_5o)
+
+cbind("mrw_5n" = lmtab(mrw_5n),
+  "mrw_5i" = lmtab(mrw_5i),
+  "mrw_5o" = lmtab(mrw_5o)
+)
+```
+
+## Tabla VI
+
+Regresión:
+$$\log(GDP_{1985,c}) - \log(GDP_{1960,c}) = \beta_0 + \beta_1\log(GDP_{1960,c}) + \beta_2[\log(IONY_{1985,c})- \log(POPGRO_{1985,c} + 0.05)]$$ 
+$$+ \beta_3[\log(SCHOOL_{1985,c}) - \log(POPGRO_{1985,c} + 0.05)] + \varepsilon_{c}$$
+
+Se distinguen los mismos casos de la Tabla I.
+
+```{r tabla_VI}
+# tabla VI
+mrw_6n <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + I(log(IONY) - log(POPGRO + 0.05)) +
+               I(log(SCHOOL) - log(POPGRO + 0.05)), data = mrw, subset = NONOIL == 1)
+mrw_6i <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + I(log(IONY) - log(POPGRO + 0.05)) +
+               I(log(SCHOOL) - log(POPGRO + 0.05)), data = mrw, subset = INTER == 1)
+mrw_6o <- lm(I(log(GDP85) - log(GDP60)) ~ log(GDP60) + I(log(IONY) - log(POPGRO + 0.05)) +
+               I(log(SCHOOL) - log(POPGRO + 0.05)), data = mrw, subset = OECD == 1)
+summary(mrw_6n)
+summary(mrw_6i)
+summary(mrw_6o)
+
+cbind("mrw_6n" = lmtab(mrw_6n),
+  "mrw_6i" = lmtab(mrw_6i),
+  "mrw_6o" = lmtab(mrw_6o)
+)
+```
+
+# Ejercicio 2
+
+Trabajo con datos propios.
