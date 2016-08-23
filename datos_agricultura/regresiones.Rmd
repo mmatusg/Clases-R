@@ -1,0 +1,43 @@
+---
+title: "Regresiones"
+author: "Pacha"
+date: "August 8, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache  = TRUE)
+```
+
+# Cargar datos
+
+```{r datos}
+library(XLConnect)
+library("sandwich")
+datos <- readWorksheetFromFile("datos_basicos_todos.xlsx", sheet = "Hoja1", region = "A3:G59")
+```
+
+```{r reg1}
+fit <- glm(IGP ~ Bmon + Pib_AH + Saldo_AG, data = datos)
+summary(fit)
+
+fit2 <- glm(IGP ~ Bmon + Saldo_AG, data = datos)
+summary(fit2)
+
+anova(fit2, fit, test = "F")
+
+fit3 <- glm(IGP ~ Bmon + Saldo_AG + Bmon*Saldo_AG, data = datos)
+summary(fit3)
+
+anova(fit3, fit2, test = "F")
+```
+
+```{r reg2}
+keep <- names(datos) %in% c("IGP","Bmon", "Pib_AH", "Saldo_AG")
+datos <- datos[keep]
+              
+datos_ts <- ts(datos, start=1875, frequency=8)
+
+plot(datos_ts)
+```
+

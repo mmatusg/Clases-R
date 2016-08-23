@@ -1,11 +1,6 @@
 base
-foreign
-httr
-plyr
 ggplot2
 GGally
-proto
 ggfortify
 XLConnectJars
 XLConnect
-ggrepel

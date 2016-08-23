@@ -1,0 +1,53 @@
+---
+title: "Analisis Exploratorio"
+author: "Pacha"
+date: "August 3, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache  = TRUE)
+```
+
+# Cargar datos
+
+```{r datos}
+library(XLConnect)
+datos <- readWorksheetFromFile("datos_basicos.xlsx", sheet = "Hoja1", region = "G3:I59")
+```
+
+```{r graficos}
+library(ggplot2)
+library(ggthemes)
+library(grid)
+library(RColorBrewer)
+
+fill <- "#4271AE"
+
+g1 <- ggplot(datos, aes(x = ano, y = purbana)) + 
+  geom_point() + 
+  stat_smooth(method = "loess")
+g1
+
+g2 <- ggplot(datos, aes(x = ano, y = purbana)) + 
+  geom_point() + 
+  stat_smooth(method = "glm")
+g2
+
+g3 <- ggplot(datos, aes(x = ano, y = purbana)) + 
+  geom_point() + 
+  stat_smooth(method = "glm", formula = y ~ I(log(x)))
+g3
+
+g4 <- ggplot(datos, aes(x = ano, y = purbana)) + 
+  geom_point() + 
+  stat_smooth(method = "glm", formula = y ~ I(sqrt(x)))
+g4
+
+g5 <- ggplot(datos, aes(x = ano, y = purbana)) + 
+  geom_point() + 
+  stat_smooth(method = "glm", formula = y ~ I(x^(0.3)))
+g5
+
+```
+
