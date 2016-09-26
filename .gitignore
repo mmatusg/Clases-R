@@ -48,3 +48,4 @@ Temporary Items
 
 # not zipped databases
 *.dta
+.Rproj.user
